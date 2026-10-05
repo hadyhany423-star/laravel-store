@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'متجرنا الإلكتروني')</title>
-<link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <title>
+        @hasSection('title')
+            @yield('title') | Epic Store
+        @else
+            Epic Store
+        @endif
+    </title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 </head>
 <body>
 

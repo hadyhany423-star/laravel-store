@@ -19,6 +19,10 @@ Route::get('/', function () {
     return redirect('/products');
 });
 
+Route::get('/support', function () {
+    return view('support');
+})->name('support');
+
 // عرض كل الأقسام
 Route::get('/categories', function () {
     $categories = Category::all();
@@ -73,7 +77,23 @@ Route::middleware(['auth', 'seller'])->group(function () {
     });
 
     Route::post('/categories/{id}/delete', function ($id) {
-        Category::findOrFail($id)->delete();
+        $deleted = DB::transaction(function () use ($id) {
+            $category = Category::whereKey($id)->lockForUpdate()->firstOrFail();
+
+            if ($category->products()->exists()) {
+                return false;
+            }
+
+            $category->delete();
+
+            return true;
+        });
+
+        if (!$deleted) {
+            return back()->withErrors([
+                'category' => 'لا يمكن حذف قسم يحتوي على منتجات. احذف المنتجات أولاً.',
+            ]);
+        }
 
         return redirect('/categories/create')->with('success', 'تم حذف القسم بنجاح!');
     });
@@ -167,13 +187,28 @@ Route::middleware(['auth', 'seller'])->group(function () {
     });
 
     Route::post('/products/{id}/delete', function ($id) {
-        $product = Product::findOrFail($id);
+        [$deleted, $image] = DB::transaction(function () use ($id) {
+            $product = Product::whereKey($id)->lockForUpdate()->firstOrFail();
 
-        if ($product->image && Storage::disk('public')->exists($product->image)) {
-            Storage::disk('public')->delete($product->image);
+            if (OrderItem::where('product_id', $product->id)->exists()) {
+                return [false, null];
+            }
+
+            $image = $product->image;
+            $product->delete();
+
+            return [true, $image];
+        });
+
+        if (!$deleted) {
+            return back()->withErrors([
+                'product' => 'لا يمكن حذف منتج مرتبط بطلب سابق حتى لا يُحذف من سجل المشتريات.',
+            ]);
         }
 
-        $product->delete();
+        if ($image && Storage::disk('public')->exists($image)) {
+            Storage::disk('public')->delete($image);
+        }
 
         return redirect('/products')->with('success', 'تم حذف المنتج بنجاح');
     });
@@ -233,7 +268,7 @@ Route::post('/login', function (Request $request) {
 
     if (Auth::attempt($credentials)) {
         $request->session()->regenerate();
-        return redirect('/products');
+        return redirect()->intended('/products');
     }
 
     return back()->withErrors([

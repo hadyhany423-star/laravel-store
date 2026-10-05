@@ -24,7 +24,7 @@
                 @endforeach
             </select>
             <br>
-            <!-- رابط إضافة قسم جديد يفتح في صفحة جديدة عشان البائع ما يفقدش البيانات اللي كتبها -->
+            <!-- رابط إضافة قسم جديد يفتح في صفحة جديدة        -->
             <a href="{{ url('/categories/create') }}" target="_blank" style="font-size: 13px; color: #007bff; text-decoration: underline;">
                 + إضافة قسم جديد
             </a>

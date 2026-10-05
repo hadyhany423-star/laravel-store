@@ -39,6 +39,26 @@ class StoreWorkflowTest extends TestCase
         $this->actingAs($buyer)->get('/products/create')->assertForbidden();
     }
 
+    public function test_login_returns_the_user_to_the_page_they_requested(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('password123')]);
+
+        $this->get('/profile')->assertRedirect('/login');
+
+        $this->post('/login', [
+            'email_or_phone' => $user->email,
+            'password' => 'password123',
+        ])->assertRedirect('/profile');
+    }
+
+    public function test_support_page_links_to_the_store_whatsapp_number(): void
+    {
+        $this->get('/support')
+            ->assertOk()
+            ->assertSee('https://wa.me/201060119827')
+            ->assertSee('تواصل معنا عبر واتساب');
+    }
+
     public function test_checkout_uses_database_price_saves_address_and_reduces_stock(): void
     {
         $user = User::factory()->create();
@@ -166,6 +186,46 @@ class StoreWorkflowTest extends TestCase
             'id' => $category->id,
             'name' => 'New category!',
             'slug' => 'new-category-2',
+        ]);
+    }
+
+    public function test_seller_cannot_delete_a_category_that_contains_products(): void
+    {
+        $seller = User::factory()->create(['role' => 'seller']);
+        $product = $this->createProduct(stock: 4);
+
+        $this->actingAs($seller)
+            ->post('/categories/'.$product->category_id.'/delete')
+            ->assertSessionHasErrors('category');
+
+        $this->assertDatabaseHas('categories', ['id' => $product->category_id]);
+        $this->assertDatabaseHas('products', ['id' => $product->id]);
+    }
+
+    public function test_seller_cannot_delete_a_product_that_is_in_order_history(): void
+    {
+        $seller = User::factory()->create(['role' => 'seller']);
+        $product = $this->createProduct(stock: 4);
+        $order = Order::create([
+            'user_id' => User::factory()->create()->id,
+            'total_price' => 10,
+            'status' => 'pending',
+            'address' => '12 Main Street',
+        ]);
+        $order->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'price' => $product->price,
+        ]);
+
+        $this->actingAs($seller)
+            ->post('/products/'.$product->id.'/delete')
+            ->assertSessionHasErrors('product');
+
+        $this->assertDatabaseHas('products', ['id' => $product->id]);
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $order->id,
+            'product_id' => $product->id,
         ]);
     }
 
