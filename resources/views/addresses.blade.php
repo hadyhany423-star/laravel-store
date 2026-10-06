@@ -9,7 +9,6 @@
         <p>{{ session('success') }}</p>
     @endif
 
-    <!-- فورم إضافة عنوان جديد -->
     <div>
         <h3>إضافة عنوان جديد</h3>
         <form action="{{ url('/addresses') }}" method="POST">
@@ -29,7 +28,7 @@
 
     <hr>
 
-    <!-- جدول عرض العناوين الحالية -->
+    
     <h3>عناوينك المسجلة</h3>
     <table border="1">
         <thead>

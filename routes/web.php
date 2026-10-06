@@ -23,7 +23,6 @@ Route::get('/support', function () {
     return view('support');
 })->name('support');
 
-// عرض كل الأقسام
 Route::get('/categories', function () {
     $categories = Category::all();
     return view('categories', compact('categories'));
@@ -286,7 +285,7 @@ Route::post('/logout', function (Request $request) {
     return redirect('/login');
 });
 
-// إضافة منتج للسلة (يدعم الـ AJAX والـ Redirect العادي)
+// إضافة منتج للسلة
 Route::post('/cart/add/{id}', function ($id, Request $request) {
     $cart = session()->get('cart', []);
     $available = true;
@@ -367,7 +366,7 @@ Route::post('/cart/clear', function () {
     return redirect()->back()->with('success', 'تم إفراغ السلة بالكامل!');
 });
 
-// عرض صفحة عناويني وعرض عناوين المستخدم الحالي (للبائع والمشتري)
+//العنواين للبايع والمشتري
 Route::get('/addresses', function () {
     $user = Auth::user();
     $addresses = $user->addresses;
@@ -375,7 +374,7 @@ Route::get('/addresses', function () {
     return view('addresses', compact('addresses'));
 })->middleware('auth');
 
-// حفظ عنوان جديد في قاعدة البيانات
+// حفظ عنوان جديد
 Route::post('/addresses', function (Request $request) {
     $validated = $request->validate([
         'address' => 'required|string|max:255',
@@ -399,7 +398,7 @@ Route::post('/addresses/{id}/delete', function ($id) {
     return redirect('/addresses')->with('success', 'تم حذف العنوان بنجاح!');
 })->middleware('auth');
 
-// التحكم في سلة المشتريات وإتمام الطلب
+// التحكم في سلة  وإتمام الطلب
 Route::post('/checkout', function (Request $request) {
     $validated = $request->validate([
         'address' => 'required|string|max:255',
@@ -456,7 +455,7 @@ Route::post('/checkout', function (Request $request) {
     return redirect('/profile');
 })->middleware('auth')->name('checkout.store');
 
-// إلغاء الطلب للمشتري (يدعم قيد المعالجة أو pending)
+// إلغاء الطلب للمشتري
 Route::post('/orders/{id}/cancel', function ($id) {
     DB::transaction(function () use ($id) {
         $order = Order::where('id', $id)
@@ -480,7 +479,7 @@ Route::post('/orders/{id}/cancel', function ($id) {
     return redirect('/profile')->with('success', 'تم إلغاء الطلب بنجاح.');
 })->middleware('auth');
 
-// حذف منتج معين من السلة
+// حذف منتج  من السلة
 Route::post('/cart/remove/{id}', function ($id) {
     $cart = session()->get('cart', []);
 
@@ -502,7 +501,7 @@ Route::post('/cart/remove/{id}', function ($id) {
     return redirect()->back()->with('success', 'تم حذف المنتج من السلة بنجاح!');
 });
 
-// عرض المنتجات أو البحث عنها
+// عرض المنتجات
 Route::get('/products', function (Request $request) {
     $search = $request->input('search');
 
@@ -515,7 +514,7 @@ Route::get('/products', function (Request $request) {
     return view('products', compact('products'));
 });
 
-// تحديث كمية منتج في السلة
+// تحديث كمية منتجات في السلة
 Route::post('/cart/update/{id}', function ($id, Request $request) {
     $cart = session()->get('cart', []);
 
